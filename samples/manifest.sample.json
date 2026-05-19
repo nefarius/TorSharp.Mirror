@@ -35,18 +35,18 @@
       "format": "Zip"
     },
     "linux-i386": {
-      "version": "4.1.0",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy_4.1.0-1_i386.deb",
+      "version": "4.0.0",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy_4.0.0-1_i386.deb",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "Deb",
-      "runtimeDeps": ["libbrotli1", "libmbedtls21"]
+      "runtimeDeps": ["libbrotli1", "libmbedtls14"]
     },
     "linux-amd64": {
-      "version": "4.1.0",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy_4.1.0-1_amd64.deb",
+      "version": "4.0.0",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy_4.0.0-1_amd64.deb",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "Deb",
-      "runtimeDeps": ["libbrotli1", "libmbedtls21"]
+      "runtimeDeps": ["libbrotli1", "libmbedtls14"]
     }
   }
 }

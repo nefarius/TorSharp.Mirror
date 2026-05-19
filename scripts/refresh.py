@@ -31,6 +31,14 @@ TOR_BASE_URL = "https://dist.torproject.org/torbrowser/"
 PRIVOXY_DEBIAN_BASE_URL = "https://www.silvester.org.uk/privoxy/Debian/"
 PRIVOXY_WINDOWS_BASE_URL = "https://www.silvester.org.uk/privoxy/Windows/"
 
+# Restrict to Debian stable releases whose dependencies are present on
+# the Ubuntu LTS versions TorSharp officially supports (22.04, 24.04).
+# trixie (Debian 13) links Privoxy against libmbedtls3 / libmbedtls21 which
+# is NOT available on Ubuntu 24.04 LTS (noble), so we cap at bookworm.
+COMPATIBLE_DEBIAN_CODENAMES: frozenset[str] = frozenset(
+    {"wheezy", "jessie", "stretch", "buster", "bullseye", "bookworm"}
+)
+
 # (upstream_os, upstream_arch) -> manifest key
 TOR_PLATFORMS = [
     ("windows", "i686",   "windows-x86"),
@@ -167,18 +175,31 @@ def download_tor(version: str, output_dir: Path) -> dict:
 # Privoxy
 # ---------------------------------------------------------------------------
 
-def _parse_stable_versions(listing_url: str) -> list[tuple]:
+def _parse_stable_versions(listing_url: str, *, debian: bool = False) -> list[tuple]:
     """
     Return list of (version_tuple, version_str, dir_name) for all stable
     entries found in the silvester.org.uk directory listing.
+
+    When *debian* is True, entries whose Debian codename is not in
+    COMPATIBLE_DEBIAN_CODENAMES are silently skipped so we never serve a
+    binary that links against shared libraries unavailable on Ubuntu LTS.
     """
     links = get_links(listing_url)
     results = []
     for link in links:
         link = link.rstrip("/")
-        m = re.match(r"^([\d]+\.[\d]+\.[\d]+)\s+\(stable\)", link)
+        # Pattern: "4.1.0 (stable) trixie"  or  "4.0.0 (stable) bookworm"
+        m = re.match(r"^([\d]+\.[\d]+\.[\d]+)\s+\(stable\)(?:\s+(\w+))?", link)
         if m:
             ver_str = m.group(1)
+            codename = (m.group(2) or "").lower()
+            if debian and codename and codename not in COMPATIBLE_DEBIAN_CODENAMES:
+                print(
+                    f"  Skipping {link!r} — codename '{codename}' is not in the "
+                    f"compatible set {sorted(COMPATIBLE_DEBIAN_CODENAMES)}",
+                    flush=True,
+                )
+                continue
             try:
                 ver_tuple = tuple(int(x) for x in ver_str.split("."))
                 results.append((ver_tuple, ver_str, link))
@@ -212,7 +233,7 @@ def _get_deb_runtime_deps(deb_path: Path) -> list[str]:
 
 
 def download_privoxy_linux(output_dir: Path) -> dict:
-    versions = _parse_stable_versions(PRIVOXY_DEBIAN_BASE_URL)
+    versions = _parse_stable_versions(PRIVOXY_DEBIAN_BASE_URL, debian=True)
     if not versions:
         raise RuntimeError("No stable Privoxy version found at " + PRIVOXY_DEBIAN_BASE_URL)
     versions.sort(reverse=True)
