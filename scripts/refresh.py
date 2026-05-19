@@ -236,43 +236,52 @@ def download_privoxy_linux(output_dir: Path) -> dict:
     versions = _parse_stable_versions(PRIVOXY_DEBIAN_BASE_URL, debian=True)
     if not versions:
         raise RuntimeError("No stable Privoxy version found at " + PRIVOXY_DEBIAN_BASE_URL)
-    versions.sort(reverse=True)
-    ver_tuple, ver_str, dir_name = versions[0]
+    versions.sort(reverse=True)  # newest first
 
-    dir_url = PRIVOXY_DEBIAN_BASE_URL + quote(dir_name) + "/"
-    print(f"\n  Privoxy Linux {ver_str} from {dir_url}", flush=True)
-
+    # Architectures may not all be present in the same release directory
+    # (e.g. bookworm 4.0.0 dropped i386).  For each arch, independently walk
+    # the sorted version list and take the newest release that provides a .deb
+    # for that arch.
     entries: dict[str, dict] = {}
     for deb_arch, key in PRIVOXY_LINUX_ARCHES:
         arch_pat = re.compile(
             rf"privoxy[_\-][\d.]+(?:[-_]\d+(?:~pp\+\d)?_)?{re.escape(deb_arch)}\.deb$",
             re.IGNORECASE,
         )
-        links = get_links(dir_url)
-        filename = next(
-            (lnk.split("/")[-1] for lnk in links if arch_pat.search(lnk)),
-            None,
-        )
-        if not filename:
-            raise RuntimeError(f"No Privoxy {deb_arch} .deb found at {dir_url}")
 
-        url = dir_url + filename
-        dest = output_dir / filename
-        print(f"\n  Downloading {filename}", flush=True)
-        actual = download_file(url, dest)
+        found = False
+        for ver_tuple, ver_str, dir_name in versions:
+            dir_url = PRIVOXY_DEBIAN_BASE_URL + quote(dir_name) + "/"
+            links = get_links(dir_url)
+            filename = next(
+                (lnk.split("/")[-1] for lnk in links if arch_pat.search(lnk)),
+                None,
+            )
+            if not filename:
+                continue  # this version doesn't ship this arch; try older one
 
-        runtime_deps = _get_deb_runtime_deps(dest)
+            url = dir_url + filename
+            dest = output_dir / filename
+            print(f"\n  Downloading {filename} (Privoxy {ver_str} / {dir_name})", flush=True)
+            actual = download_file(url, dest)
 
-        entry: dict = {
-            "version": ver_str,
-            "url": url,
-            "sha256": actual,
-            "format": "Deb",
-        }
-        if runtime_deps:
-            entry["runtimeDeps"] = runtime_deps
+            runtime_deps = _get_deb_runtime_deps(dest)
 
-        entries[key] = entry
+            entry: dict = {
+                "version": ver_str,
+                "url": url,
+                "sha256": actual,
+                "format": "Deb",
+            }
+            if runtime_deps:
+                entry["runtimeDeps"] = runtime_deps
+
+            entries[key] = entry
+            found = True
+            break
+
+        if not found:
+            print(f"  WARNING: No Privoxy {deb_arch} .deb found in any compatible version — skipping {key}", flush=True)
 
     return entries
 
