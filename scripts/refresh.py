@@ -237,6 +237,24 @@ def _get_deb_runtime_deps(deb_path: Path) -> list[str]:
         return []
 
 
+def _safe_privoxy_name(version: str, arch_or_ext: str, extension: str) -> str:
+    """
+    Return a GitHub-safe asset filename for a Privoxy binary.
+
+    Debian packages from silvester.org.uk carry epoch/revision separators
+    such as '~' and '+' (e.g. privoxy_4.0.0-1~pp+1_amd64.deb).  GitHub
+    Release asset URLs percent-encode those characters, causing a mismatch
+    between the URL stored in manifest.json and the URL that actually serves
+    the file.  We rename every Privoxy file to a predictable ASCII-only name
+    before uploading so the manifest URL and the real asset URL always agree.
+
+    Examples:
+        _safe_privoxy_name("4.0.0", "amd64", "deb") -> "privoxy_4.0.0_amd64.deb"
+        _safe_privoxy_name("4.1.0", "windows", "zip") -> "privoxy_4.1.0_windows.zip"
+    """
+    return f"privoxy_{version}_{arch_or_ext}.{extension}"
+
+
 def _apt_download_privoxy(deb_arch: str, output_dir: Path) -> dict | None:
     """
     Fallback: download Privoxy via apt-get download from the system package
@@ -291,13 +309,18 @@ def _apt_download_privoxy(deb_arch: str, output_dir: Path) -> dict | None:
         print(f"    No privoxy*{deb_arch}*.deb found after apt-get download", flush=True)
         return None
 
-    dest = debs[-1]
+    raw_dest = debs[-1]
+    # Rename to a safe, ASCII-only filename before computing hash / building URL.
+    safe_name = _safe_privoxy_name(version, deb_arch, "deb")
+    dest = output_dir / safe_name
+    raw_dest.rename(dest)
+
     actual = sha256_file(dest)
     runtime_deps = _get_deb_runtime_deps(dest)
 
     entry: dict = {
         "version": version,
-        "url": MIRROR_RELEASE_BASE_URL + dest.name,
+        "url": MIRROR_RELEASE_BASE_URL + safe_name,
         "sha256": actual,
         "format": "Deb",
     }
@@ -348,20 +371,26 @@ def download_privoxy_linux(output_dir: Path) -> dict:
                     continue  # this version doesn't ship this arch; try older one
 
                 url = dir_url + filename
-                dest = output_dir / filename
+                raw_dest = output_dir / filename
                 print(f"\n  Downloading {filename} (Privoxy {ver_str} / {dir_name})", flush=True)
                 try:
-                    actual = download_file(url, dest)
+                    download_file(url, raw_dest)
                 except (HTTPError, URLError) as exc:
                     print(f"  WARNING: Download of {filename} failed ({exc}) — switching to apt fallback for {key}", flush=True)
                     break
+
+                # Rename to a safe ASCII-only name to avoid GitHub URL-encoding issues.
+                safe_name = _safe_privoxy_name(ver_str, deb_arch, "deb")
+                dest = output_dir / safe_name
+                raw_dest.rename(dest)
+                actual = sha256_file(dest)
 
                 runtime_deps = _get_deb_runtime_deps(dest)
 
                 entry: dict = {
                     "version": ver_str,
                     "upstreamUrl": url,
-                    "url": MIRROR_RELEASE_BASE_URL + filename,
+                    "url": MIRROR_RELEASE_BASE_URL + safe_name,
                     "sha256": actual,
                     "format": "Deb",
                 }
@@ -405,15 +434,20 @@ def download_privoxy_windows(output_dir: Path) -> dict:
         raise RuntimeError(f"No Privoxy Windows .zip found at {dir_url}")
 
     url = dir_url + filename
-    dest = output_dir / filename
+    raw_dest = output_dir / filename
     print(f"\n  Downloading {filename}", flush=True)
-    actual = download_file(url, dest)
+    download_file(url, raw_dest)
+
+    safe_name = _safe_privoxy_name(ver_str, "windows", "zip")
+    dest = output_dir / safe_name
+    raw_dest.rename(dest)
+    actual = sha256_file(dest)
 
     return {
         "windows": {
             "version": ver_str,
             "upstreamUrl": url,
-            "url": MIRROR_RELEASE_BASE_URL + filename,
+            "url": MIRROR_RELEASE_BASE_URL + safe_name,
             "sha256": actual,
             "format": "Zip",
         }

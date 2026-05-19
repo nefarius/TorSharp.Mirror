@@ -35,14 +35,14 @@
     "windows": {
       "version": "4.1.0",
       "upstreamUrl": "https://www.silvester.org.uk/privoxy/Windows/4.1.0%20%28stable%29/privoxy-4.1.0.zip",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy-4.1.0.zip",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy_4.1.0_windows.zip",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "Zip"
     },
     "linux-i386": {
       "version": "3.0.34",
       "upstreamUrl": "https://www.silvester.org.uk/privoxy/Debian/3.0.34%20%28stable%29%20bullseye/privoxy_3.0.34-1~pp+1_i386.deb",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy_3.0.34-1~pp+1_i386.deb",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy_3.0.34_i386.deb",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "Deb",
       "runtimeDeps": ["libbrotli1", "libmbedtls14"]
@@ -50,7 +50,7 @@
     "linux-amd64": {
       "version": "4.0.0",
       "upstreamUrl": "https://www.silvester.org.uk/privoxy/Debian/4.0.0%20%28stable%29%20bookworm/privoxy_4.0.0-1~pp+1_amd64.deb",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy_4.0.0-1~pp+1_amd64.deb",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy_4.0.0_amd64.deb",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "Deb",
       "runtimeDeps": ["libbrotli1", "libmbedtls14"]
