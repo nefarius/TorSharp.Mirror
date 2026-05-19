@@ -4,25 +4,29 @@
   "tor": {
     "windows-x86": {
       "version": "15.0.14",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/tor-expert-bundle-windows-i686-15.0.14.tar.gz",
+      "upstreamUrl": "https://dist.torproject.org/torbrowser/15.0.14/tor-expert-bundle-windows-i686-15.0.14.tar.gz",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/tor-expert-bundle-windows-i686-15.0.14.tar.gz",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "TarGz"
     },
     "windows-x86_64": {
       "version": "15.0.14",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/tor-expert-bundle-windows-x86_64-15.0.14.tar.gz",
+      "upstreamUrl": "https://dist.torproject.org/torbrowser/15.0.14/tor-expert-bundle-windows-x86_64-15.0.14.tar.gz",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/tor-expert-bundle-windows-x86_64-15.0.14.tar.gz",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "TarGz"
     },
     "linux-x86": {
       "version": "15.0.14",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/tor-expert-bundle-linux-i686-15.0.14.tar.gz",
+      "upstreamUrl": "https://dist.torproject.org/torbrowser/15.0.14/tor-expert-bundle-linux-i686-15.0.14.tar.gz",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/tor-expert-bundle-linux-i686-15.0.14.tar.gz",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "TarGz"
     },
     "linux-x86_64": {
       "version": "15.0.14",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/tor-expert-bundle-linux-x86_64-15.0.14.tar.gz",
+      "upstreamUrl": "https://dist.torproject.org/torbrowser/15.0.14/tor-expert-bundle-linux-x86_64-15.0.14.tar.gz",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/tor-expert-bundle-linux-x86_64-15.0.14.tar.gz",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "TarGz"
     }
@@ -30,20 +34,23 @@
   "privoxy": {
     "windows": {
       "version": "4.1.0",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy-4.1.0.zip",
+      "upstreamUrl": "https://www.silvester.org.uk/privoxy/Windows/4.1.0%20%28stable%29/privoxy-4.1.0.zip",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy-4.1.0.zip",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "Zip"
     },
     "linux-i386": {
-      "version": "4.0.0",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy_4.0.0-1_i386.deb",
+      "version": "3.0.34",
+      "upstreamUrl": "https://www.silvester.org.uk/privoxy/Debian/3.0.34%20%28stable%29%20bullseye/privoxy_3.0.34-1~pp+1_i386.deb",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy_3.0.34-1~pp+1_i386.deb",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "Deb",
       "runtimeDeps": ["libbrotli1", "libmbedtls14"]
     },
     "linux-amd64": {
       "version": "4.0.0",
-      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy_4.0.0-1_amd64.deb",
+      "upstreamUrl": "https://www.silvester.org.uk/privoxy/Debian/4.0.0%20%28stable%29%20bookworm/privoxy_4.0.0-1~pp+1_amd64.deb",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/privoxy_4.0.0-1~pp+1_amd64.deb",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "format": "Deb",
       "runtimeDeps": ["libbrotli1", "libmbedtls14"]

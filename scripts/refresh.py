@@ -31,6 +31,10 @@ TOR_BASE_URL = "https://dist.torproject.org/torbrowser/"
 PRIVOXY_DEBIAN_BASE_URL = "https://www.silvester.org.uk/privoxy/Debian/"
 PRIVOXY_WINDOWS_BASE_URL = "https://www.silvester.org.uk/privoxy/Windows/"
 
+# Base URL for mirror release assets.  Consumers use the /latest/ redirect so
+# they always get the most-recent release without needing to know the tag name.
+MIRROR_RELEASE_BASE_URL = "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/"
+
 # Restrict to Debian stable releases whose dependencies are present on
 # the Ubuntu LTS versions TorSharp officially supports (22.04, 24.04).
 # trixie (Debian 13) links Privoxy against libmbedtls3 / libmbedtls21 which
@@ -163,7 +167,8 @@ def download_tor(version: str, output_dir: Path) -> dict:
 
         entries[key] = {
             "version": version,
-            "url": url,
+            "upstreamUrl": url,
+            "url": MIRROR_RELEASE_BASE_URL + filename,
             "sha256": actual,
             "format": "TarGz",
         }
@@ -269,7 +274,8 @@ def download_privoxy_linux(output_dir: Path) -> dict:
 
             entry: dict = {
                 "version": ver_str,
-                "url": url,
+                "upstreamUrl": url,
+                "url": MIRROR_RELEASE_BASE_URL + filename,
                 "sha256": actual,
                 "format": "Deb",
             }
@@ -313,7 +319,8 @@ def download_privoxy_windows(output_dir: Path) -> dict:
     return {
         "windows": {
             "version": ver_str,
-            "url": url,
+            "upstreamUrl": url,
+            "url": MIRROR_RELEASE_BASE_URL + filename,
             "sha256": actual,
             "format": "Zip",
         }
