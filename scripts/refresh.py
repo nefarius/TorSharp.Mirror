@@ -237,11 +237,86 @@ def _get_deb_runtime_deps(deb_path: Path) -> list[str]:
         return []
 
 
+def _apt_download_privoxy(deb_arch: str, output_dir: Path) -> dict | None:
+    """
+    Fallback: download Privoxy via apt-get download from the system package
+    repository.  Works reliably on Debian/Ubuntu CI runners where silvester.org.uk
+    may block the runner's IP range.
+
+    Returns a manifest entry dict on success, None on failure.
+    """
+    pkg = "privoxy" if deb_arch == "amd64" else f"privoxy:{deb_arch}"
+
+    # Enable cross-arch downloads if needed (dpkg --add-architecture + update).
+    if deb_arch != "amd64":
+        print(f"    Adding {deb_arch} dpkg architecture...", flush=True)
+        subprocess.run(
+            ["sudo", "dpkg", "--add-architecture", deb_arch],
+            check=False, capture_output=True,
+        )
+        subprocess.run(
+            ["sudo", "apt-get", "update", "-qq"],
+            check=False, capture_output=True,
+        )
+
+    # Resolve version from apt-cache (e.g. "3.0.34-3" → "3.0.34").
+    show = subprocess.run(
+        ["apt-cache", "show", pkg],
+        capture_output=True, text=True,
+    )
+    version: str | None = None
+    for line in show.stdout.splitlines():
+        if line.startswith("Version:"):
+            m = re.match(r"([\d.]+)", line.split(":", 1)[1].strip())
+            if m:
+                version = m.group(1)
+            break
+
+    if not version:
+        print(f"    apt-cache show {pkg}: package not found — skipping", flush=True)
+        return None
+
+    # apt-get download always writes to CWD.
+    result = subprocess.run(
+        ["apt-get", "download", pkg],
+        cwd=str(output_dir),
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"    apt-get download {pkg} failed:\n{result.stderr.strip()}", flush=True)
+        return None
+
+    debs = sorted(output_dir.glob(f"privoxy_*{deb_arch}*.deb"))
+    if not debs:
+        print(f"    No privoxy*{deb_arch}*.deb found after apt-get download", flush=True)
+        return None
+
+    dest = debs[-1]
+    actual = sha256_file(dest)
+    runtime_deps = _get_deb_runtime_deps(dest)
+
+    entry: dict = {
+        "version": version,
+        "url": MIRROR_RELEASE_BASE_URL + dest.name,
+        "sha256": actual,
+        "format": "Deb",
+    }
+    if runtime_deps:
+        entry["runtimeDeps"] = runtime_deps
+    return entry
+
+
 def download_privoxy_linux(output_dir: Path) -> dict:
-    versions = _parse_stable_versions(PRIVOXY_DEBIAN_BASE_URL, debian=True)
-    if not versions:
-        raise RuntimeError("No stable Privoxy version found at " + PRIVOXY_DEBIAN_BASE_URL)
-    versions.sort(reverse=True)  # newest first
+    # Try silvester.org.uk first; fall back to apt-get if the host blocks the
+    # runner's IP (HTTP 403/timeout is common from GitHub Actions IP ranges).
+    silvester_ok = True
+    versions: list = []
+    try:
+        versions = _parse_stable_versions(PRIVOXY_DEBIAN_BASE_URL, debian=True)
+        versions.sort(reverse=True)  # newest first
+    except (HTTPError, URLError) as exc:
+        print(f"  WARNING: Could not list silvester.org.uk ({exc}) — will use apt fallback for all arches", flush=True)
+        silvester_ok = False
 
     # Architectures may not all be present in the same release directory
     # (e.g. bookworm 4.0.0 dropped i386).  For each arch, independently walk
@@ -255,39 +330,57 @@ def download_privoxy_linux(output_dir: Path) -> dict:
         )
 
         found = False
-        for ver_tuple, ver_str, dir_name in versions:
-            dir_url = PRIVOXY_DEBIAN_BASE_URL + quote(dir_name) + "/"
-            links = get_links(dir_url)
-            filename = next(
-                (lnk.split("/")[-1] for lnk in links if arch_pat.search(lnk)),
-                None,
-            )
-            if not filename:
-                continue  # this version doesn't ship this arch; try older one
 
-            url = dir_url + filename
-            dest = output_dir / filename
-            print(f"\n  Downloading {filename} (Privoxy {ver_str} / {dir_name})", flush=True)
-            actual = download_file(url, dest)
+        if silvester_ok and versions:
+            for ver_tuple, ver_str, dir_name in versions:
+                dir_url = PRIVOXY_DEBIAN_BASE_URL + quote(dir_name) + "/"
+                try:
+                    links = get_links(dir_url)
+                except (HTTPError, URLError) as exc:
+                    print(f"  WARNING: Could not fetch {dir_url} ({exc}) — switching to apt fallback for {key}", flush=True)
+                    break
 
-            runtime_deps = _get_deb_runtime_deps(dest)
+                filename = next(
+                    (lnk.split("/")[-1] for lnk in links if arch_pat.search(lnk)),
+                    None,
+                )
+                if not filename:
+                    continue  # this version doesn't ship this arch; try older one
 
-            entry: dict = {
-                "version": ver_str,
-                "upstreamUrl": url,
-                "url": MIRROR_RELEASE_BASE_URL + filename,
-                "sha256": actual,
-                "format": "Deb",
-            }
-            if runtime_deps:
-                entry["runtimeDeps"] = runtime_deps
+                url = dir_url + filename
+                dest = output_dir / filename
+                print(f"\n  Downloading {filename} (Privoxy {ver_str} / {dir_name})", flush=True)
+                try:
+                    actual = download_file(url, dest)
+                except (HTTPError, URLError) as exc:
+                    print(f"  WARNING: Download of {filename} failed ({exc}) — switching to apt fallback for {key}", flush=True)
+                    break
 
-            entries[key] = entry
-            found = True
-            break
+                runtime_deps = _get_deb_runtime_deps(dest)
+
+                entry: dict = {
+                    "version": ver_str,
+                    "upstreamUrl": url,
+                    "url": MIRROR_RELEASE_BASE_URL + filename,
+                    "sha256": actual,
+                    "format": "Deb",
+                }
+                if runtime_deps:
+                    entry["runtimeDeps"] = runtime_deps
+
+                entries[key] = entry
+                found = True
+                break
 
         if not found:
-            print(f"  WARNING: No Privoxy {deb_arch} .deb found in any compatible version — skipping {key}", flush=True)
+            print(f"\n  Falling back to apt-get download for Privoxy {deb_arch}...", flush=True)
+            entry = _apt_download_privoxy(deb_arch, output_dir)
+            if entry:
+                entries[key] = entry
+                found = True
+
+        if not found:
+            print(f"  WARNING: No Privoxy {deb_arch} .deb found from any source — skipping {key}", flush=True)
 
     return entries
 
