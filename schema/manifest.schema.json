@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/nefarius/TorSharp.Mirror/releases/latest/download/manifest.schema.json",
+  "title": "TorSharp Mirror Manifest",
+  "description": "Describes the latest mirrored Tor expert bundles and Privoxy packages with SHA256 checksums.",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "tor", "privoxy"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "description": "Schema version. Currently 1.",
+      "const": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this manifest was generated."
+    },
+    "tor": {
+      "type": "object",
+      "description": "Tor expert bundle entries keyed by '{os}-{arch}'. Valid os values: 'windows', 'linux'. Valid arch values: 'x86', 'x86_64'.",
+      "additionalProperties": { "$ref": "#/definitions/entry" }
+    },
+    "privoxy": {
+      "type": "object",
+      "description": "Privoxy package entries keyed by '{os}' (Windows) or '{os}-{arch}' (Linux). Examples: 'windows', 'linux-i386', 'linux-amd64'.",
+      "additionalProperties": { "$ref": "#/definitions/entry" }
+    }
+  },
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "required": ["version", "url", "sha256", "format"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Dotted version string parsable by System.Version, e.g. '15.0.14' or '4.1.0'."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute HTTPS URL of the binary asset."
+        },
+        "sha256": {
+          "type": "string",
+          "description": "Lowercase hex-encoded SHA256 digest of the binary asset.",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "format": {
+          "type": "string",
+          "description": "Archive format.",
+          "enum": ["TarGz", "Zip", "Deb"]
+        },
+        "runtimeDeps": {
+          "type": "array",
+          "description": "apt package names required at runtime (Linux only).",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

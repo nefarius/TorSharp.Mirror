@@ -1,0 +1,63 @@
+name: Refresh Mirror
+
+on:
+  schedule:
+    # Run nightly at 03:00 UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refresh mirror artifacts
+        run: python3 scripts/refresh.py --output-dir dist
+
+      - name: Copy schema and sample to dist
+        run: |
+          cp schema/manifest.schema.json dist/manifest.schema.json
+          cp samples/manifest.sample.json dist/manifest.sample.json
+
+      - name: Compute release tag
+        id: tag
+        run: |
+          TAG="mirror-$(date -u +%Y.%m.%d)"
+          # Append counter if the tag already exists
+          COUNTER=1
+          BASE_TAG="$TAG"
+          while gh release view "$TAG" > /dev/null 2>&1; do
+            COUNTER=$((COUNTER + 1))
+            TAG="${BASE_TAG}.${COUNTER}"
+          done
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Release tag: $TAG"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            --title "Mirror ${{ steps.tag.outputs.tag }}" \
+            --notes "Automated refresh of Tor expert bundles and Privoxy packages.
+
+          | Tool    | See manifest.json |
+          |---------|-------------------|
+          | Tor     | tor-expert-bundle-* |
+          | Privoxy | privoxy-* / privoxy_* |
+
+          SHA256 checksums are embedded in \`manifest.json\`." \
+            --latest \
+            dist/*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

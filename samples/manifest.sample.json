@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-19T03:00:00Z",
+  "tor": {
+    "windows-x86": {
+      "version": "15.0.14",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/tor-expert-bundle-windows-i686-15.0.14.tar.gz",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "format": "TarGz"
+    },
+    "windows-x86_64": {
+      "version": "15.0.14",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/tor-expert-bundle-windows-x86_64-15.0.14.tar.gz",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "format": "TarGz"
+    },
+    "linux-x86": {
+      "version": "15.0.14",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/tor-expert-bundle-linux-i686-15.0.14.tar.gz",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "format": "TarGz"
+    },
+    "linux-x86_64": {
+      "version": "15.0.14",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/tor-expert-bundle-linux-x86_64-15.0.14.tar.gz",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "format": "TarGz"
+    }
+  },
+  "privoxy": {
+    "windows": {
+      "version": "4.1.0",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy-4.1.0.zip",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "format": "Zip"
+    },
+    "linux-i386": {
+      "version": "4.1.0",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy_4.1.0-1_i386.deb",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "format": "Deb",
+      "runtimeDeps": ["libbrotli1", "libmbedtls21"]
+    },
+    "linux-amd64": {
+      "version": "4.1.0",
+      "url": "https://github.com/nefarius/TorSharp.Mirror/releases/download/mirror-2026.05.19/privoxy_4.1.0-1_amd64.deb",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "format": "Deb",
+      "runtimeDeps": ["libbrotli1", "libmbedtls21"]
+    }
+  }
+}
