@@ -1,6 +1,6 @@
 # TorSharp.Mirror
 
-A long-term binary cache for [TorSharp](https://github.com/joelverhagen/TorSharp).
+A long-term binary cache for [TorSharp](https://github.com/nefarius/TorSharp).
 
 ## What is this?
 
